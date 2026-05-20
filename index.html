@@ -616,7 +616,7 @@ function handleSubmit(){
     btn.textContent = 'Submitting…';
     btn.disabled = true;
 
-    fetch('YOUR_APPS_SCRIPT_URL', {
+    fetch('https://script.google.com/macros/s/AKfycbzO_lGs65ubZYLYhTXXihLLaWsma6oCDRlRmRQV8JYjPosABfemYI4sKDLbJYaEKn_tRA/exec', {
       method: 'POST',
       body: JSON.stringify(entry)
     })
