@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Emm Alpha Trial · Usable-dataset forecaster</title>
+<style>
+  :root{
+    --orange:#DA4E34; --purple:#7F77DD; --lilac:#9C9EE7;
+    --cream:#FAEFDF; --paper:#FFFFFF; --ink:#220817;
+    --inkSoft:#6b5560; --line:#E7D8C8; --good:#2f8a5b; --bad:#c0392b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--cream);color:var(--ink);
+    font-family:'Proxima Nova',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 18px 48px;}
+  .kicker{color:var(--orange);letter-spacing:2px;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:4px;}
+  h1{font-size:26px;margin:0;line-height:1.1;}
+  .lede{color:var(--inkSoft);font-size:14px;margin:6px 0 0;max-width:680px;line-height:1.4;}
+  .banner{border-radius:16px;padding:16px;margin:20px 0;}
+  .banner h2{font-size:13px;text-transform:uppercase;letter-spacing:.5px;margin:0 0 4px;}
+  .banner p{margin:0;font-size:14px;line-height:1.45;color:var(--ink);}
+  .grid{display:grid;grid-template-columns:1fr;gap:16px;}
+  @media(min-width:920px){.grid{grid-template-columns:340px 1fr;align-items:start;}}
+  .col{display:flex;flex-direction:column;gap:16px;}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;}
+  .card h3{font-size:13px;text-transform:uppercase;letter-spacing:.6px;margin:0;font-weight:600;}
+  .card .sub{color:var(--inkSoft);font-size:12px;margin:4px 0 8px;line-height:1.35;}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0;}
+  .row label{color:var(--inkSoft);font-size:13px;line-height:1.2;}
+  .row .hint{display:block;color:var(--lilac);font-size:11px;}
+  input[type=number]{width:60px;text-align:right;border:1px solid var(--line);border-radius:8px;
+    padding:5px 8px;font-size:14px;color:var(--ink);background:var(--paper);}
+  input[type=number].wide{width:66px;}
+  select{border:1px solid var(--line);border-radius:8px;padding:3px 4px;font-size:12px;background:var(--paper);color:var(--ink);}
+  .divider{border-top:1px solid var(--line);margin-top:6px;padding-top:4px;}
+  .wave{border-top:1px solid var(--line);padding:8px 0;}
+  .wave:first-child{border-top:none;}
+  .wave .top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .wave .top span{font-size:13px;font-weight:600;}
+  .wave .opts{display:flex;align-items:center;gap:14px;margin-top:6px;color:var(--inkSoft);font-size:12px;}
+  .note{color:var(--inkSoft);font-size:12px;line-height:1.35;margin-top:8px;}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .tile{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px;}
+  .tile .lab{color:var(--inkSoft);font-size:12px;}
+  .tile .val{font-size:32px;font-weight:700;line-height:1;}
+  .tile .of{color:var(--inkSoft);font-size:13px;}
+  .tile .status{font-size:12px;font-weight:600;margin-top:6px;}
+  .barRow{display:flex;align-items:center;gap:12px;margin:6px 0;}
+  .barRow .lab{color:var(--inkSoft);font-size:12px;width:72px;flex:none;}
+  .barTrack{flex:1;background:var(--cream);border-radius:999px;height:16px;overflow:hidden;}
+  .barFill{height:100%;background:var(--orange);}
+  .barRow .num{width:42px;text-align:right;font-size:13px;font-weight:600;}
+  .foot{color:var(--inkSoft);font-size:11px;margin-top:18px;line-height:1.4;}
+  svg{width:100%;height:auto;display:block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">Emm · Alpha Trial</div>
+  <h1>Usable-dataset forecaster</h1>
+  <p class="lede">One period per month. An unusable period isn't re-attempted — the user moves to the next
+    period (lower dropout), so unique users can sit above your usable 1st-period count. Unique users can
+    never exceed the people who exist; that ceiling is drawn on the chart.</p>
+
+  <div id="banner" class="banner"></div>
+
+  <div class="grid">
+    <!-- INPUTS -->
+    <div class="col">
+      <div class="card">
+        <h3>Established — active testers</h3>
+        <div class="sub" id="activeSub"></div>
+        <div class="row"><label>Done 1 &rarr; due period 2</label><input type="number" min="0" id="a1" value="10"></div>
+        <div class="row"><label>Done 2 &rarr; due period 3</label><input type="number" min="0" id="a2" value="7"></div>
+        <div class="row"><label>Done 3 &rarr; due period 4</label><input type="number" min="0" id="a3" value="10"></div>
+        <div class="row"><label>Done 4 &rarr; due period 5</label><input type="number" min="0" id="a4" value="0"></div>
+        <div class="row"><label>Done 5 (complete)</label><input type="number" min="0" id="a5" value="0"></div>
+        <div class="divider">
+          <div class="row"><label>Total who did period 1 (active + stopped)</label><input class="wide" type="number" min="0" id="total" value="45"></div>
+          <div class="row"><label>Unique users now (&ge;1 usable)</label><input class="wide" type="number" min="0" id="unique" value="33"></div>
+        </div>
+        <div class="note" id="estNote"></div>
+      </div>
+
+      <div class="card">
+        <h3>Datasets banked, by period</h3>
+        <div class="sub" id="dsSub"></div>
+        <div class="row"><label>Usable 1st periods</label><input type="number" min="0" id="p1" value="29"></div>
+        <div class="row"><label>Usable 2nd periods</label><input type="number" min="0" id="p2" value="22"></div>
+        <div class="row"><label>Usable 3rd periods</label><input type="number" min="0" id="p3" value="11"></div>
+        <div class="row"><label>Usable 4th periods</label><input type="number" min="0" id="p4" value="0"></div>
+        <div class="row"><label>Usable 5th periods</label><input type="number" min="0" id="p5" value="0"></div>
+      </div>
+
+      <div class="card">
+        <h3>Last month's 32 recruits</h3>
+        <div class="sub">When each group has its first in-study period.</div>
+        <div class="wave">
+          <div class="top"><span>Usable 1st period by ~1 Jul</span><input type="number" min="0" id="wAn" value="13"></div>
+          <div class="opts">
+            <label>1st period:
+              <select id="wAc"><option value="1" selected>Jul</option><option value="2">Aug</option><option value="3">Sep</option><option value="4">Oct</option></select>
+            </label>
+            <label><input type="checkbox" id="wAk" checked> usable confirmed</label>
+          </div>
+        </div>
+        <div class="wave">
+          <div class="top"><span>1st attempt by start of Aug</span><input type="number" min="0" id="wBn" value="18"></div>
+          <div class="opts">
+            <label>1st period:
+              <select id="wBc"><option value="1" selected>Jul</option><option value="2">Aug</option><option value="3">Sep</option><option value="4">Oct</option></select>
+            </label>
+            <label><input type="checkbox" id="wBk"> usable confirmed</label>
+          </div>
+        </div>
+        <div class="wave">
+          <div class="top"><span>1st period due in Aug</span><input type="number" min="0" id="wCn" value="1"></div>
+          <div class="opts">
+            <label>1st period:
+              <select id="wCc"><option value="1">Jul</option><option value="2" selected>Aug</option><option value="3">Sep</option><option value="4">Oct</option></select>
+            </label>
+            <label><input type="checkbox" id="wCk"> usable confirmed</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Rates</h3>
+        <div class="row"><label>Monthly mitigation (missed datasets)</label><input type="number" min="0" id="mit" value="29"></div>
+        <div class="sub" style="margin-top:8px">Unusable-data rate by period</div>
+        <div class="row"><label>1st</label><input type="number" min="0" id="d1" value="36"></div>
+        <div class="row"><label>2nd</label><input type="number" min="0" id="d2" value="19"></div>
+        <div class="row"><label>3rd</label><input type="number" min="0" id="d3" value="15"></div>
+        <div class="row"><label>4th</label><input type="number" min="0" id="d4" value="10"></div>
+        <div class="row"><label>5th</label><input type="number" min="0" id="d5" value="10"></div>
+        <div class="row"><label>True quit per month<span class="hint">leave the study for good</span></label><input type="number" min="0" id="quit" value="0"></div>
+      </div>
+
+      <div class="card">
+        <h3>What-if &amp; targets</h3>
+        <div class="row"><label>Extra recruited today<span class="hint">first period ~Aug</span></label><input type="number" min="0" id="extra" value="0"></div>
+        <div class="divider">
+          <div class="row"><label>Unique-user target</label><input type="number" min="0" id="uTarget" value="50"></div>
+          <div class="row"><label>Dataset target</label><input type="number" min="0" id="dTarget" value="140"></div>
+          <div class="row"><label>Target month (from now)</label><input type="number" min="0" max="6" id="tCycle" value="2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OUTPUTS -->
+    <div class="col">
+      <div class="tiles">
+        <div class="tile">
+          <div class="lab" id="uTileLab"></div>
+          <div><span class="val" id="uVal" style="color:var(--purple)"></span> <span class="of" id="uOf"></span></div>
+          <div class="status" id="uStatus"></div>
+        </div>
+        <div class="tile">
+          <div class="lab" id="dTileLab"></div>
+          <div><span class="val" id="dVal" style="color:var(--orange)"></span> <span class="of" id="dOf"></span></div>
+          <div class="status" id="dStatus"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Projection</h3>
+        <div id="chart" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card">
+        <h3 id="perTitle">Usable datasets by period</h3>
+        <div id="perBars" style="margin-top:8px"></div>
+        <div class="note" id="perTotal"></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+"use strict";
+var MONTHS = ["Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function monthOf(c){ return MONTHS[Math.min(c, MONTHS.length-1)]; }
+
+/* Attempt-based cohort model (identical logic to the working version). */
+function project(o){
+  var T = [0].concat(o.activeStages); while(T.length<6) T.push(0);
+  var U = T.map(function(){return 0;});
+  var cumU = Math.min(o.seedUnique, o.capUnique), cumD = o.seedDatasets, per = o.seedPer.slice();
+  var byCycle = {};
+  o.waves.forEach(function(w){ (byCycle[w.cycle]=byCycle[w.cycle]||[]).push(w); });
+  var rows = [{cycle:0, unique:cumU, datasets:cumD, per:per.slice()}];
+  for(var t=1;t<=o.cycles;t++){
+    (byCycle[t]||[]).forEach(function(w){
+      if(w.confirmed){ T[1]+=w.count; cumU+=w.count; cumD+=w.count; per[0]+=w.count; }
+      else { T[0]+=w.count; U[0]+=w.count; }
+    });
+    if(o.quit>0) for(var s=0;s<=4;s++){ T[s]*=1-o.quit; U[s]*=1-o.quit; }
+    var adv=[],advU=[],newUniq=[],nuNext=[];
+    for(var s=0;s<=4;s++){
+      adv[s]=(1-o.m)*T[s];
+      advU[s]=adv[s]*(1-o.d[s]);
+      var nu=(1-o.m)*U[s];
+      newUniq[s]=nu*(1-o.d[s]);
+      nuNext[s]=nu*o.d[s];
+    }
+    var nT=T.slice(), nU=U.slice();
+    for(var s=0;s<=4;s++){
+      nT[s]-=adv[s]; nT[s+1]+=adv[s];
+      nU[s]-=(1-o.m)*U[s]; nU[s+1]+=nuNext[s];
+      per[s+1]+=advU[s];
+    }
+    T=nT; U=nU;
+    cumD += advU.reduce(function(a,b){return a+b;},0);
+    cumU = Math.min(cumU + newUniq.reduce(function(a,b){return a+b;},0), o.capUnique);
+    rows.push({cycle:t, unique:cumU, datasets:cumD, per:per.slice()});
+  }
+  return rows;
+}
+
+function solve(args, baseWaves, metric, target, targetCycle, extraCycle){
+  var cap=4000;
+  function run(x){
+    var waves = x>0 ? baseWaves.concat([{cycle:extraCycle,count:x,confirmed:false}]) : baseWaves;
+    var a = Object.assign({}, args, {waves:waves, capUnique:args.capUnique + x});
+    return project(a)[targetCycle][metric];
+  }
+  if(run(0)>=target) return 0;
+  if(run(cap)<target) return null;
+  var lo=0, hi=cap;
+  while(hi-lo>1){ var mid=(lo+hi)>>1; if(run(mid)>=target) hi=mid; else lo=mid; }
+  return hi;
+}
+
+function num(id){ var v=+document.getElementById(id).value; return isNaN(v)?0:v; }
+function chk(id){ return document.getElementById(id).checked; }
+
+function buildChart(rows, ceiling, dTarget, uTarget, tCycle){
+  var W=760,H=380,L=44,R=48,Tm=24,Bm=34;
+  var pw=W-L-R, ph=H-Tm-Bm;
+  var dsMax = Math.max(dTarget, Math.max.apply(null, rows.map(function(r){return r.datasets;})));
+  dsMax = Math.ceil(dsMax/50)*50 || 50;
+  var uMax = Math.ceil((ceiling+6)/10)*10 || 10;
+  var n = rows.length-1;
+  function x(i){ return L + i*pw/n; }
+  function yds(v){ return Tm + ph - v/dsMax*ph; }
+  function yu(v){ return Tm + ph - v/uMax*ph; }
+  var s=[];
+  s.push('<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" font-family="inherit">');
+  // gridlines + axis labels
+  for(var g=0;g<=4;g++){
+    var yy=Tm+ph - g/4*ph;
+    s.push('<line x1="'+L+'" y1="'+yy+'" x2="'+(L+pw)+'" y2="'+yy+'" stroke="var(--line)"/>');
+    s.push('<text x="'+(L-6)+'" y="'+(yy+4)+'" text-anchor="end" font-size="11" fill="var(--inkSoft)">'+Math.round(g/4*dsMax)+'</text>');
+    s.push('<text x="'+(L+pw+6)+'" y="'+(yy+4)+'" text-anchor="start" font-size="11" fill="var(--inkSoft)">'+Math.round(g/4*uMax)+'</text>');
+  }
+  // x labels
+  for(var i=0;i<=n;i++){
+    s.push('<text x="'+x(i)+'" y="'+(Tm+ph+18)+'" text-anchor="middle" font-size="11" fill="var(--inkSoft)">'+(i===0?'Now':monthOf(i))+'</text>');
+  }
+  // target month vertical
+  s.push('<line x1="'+x(tCycle)+'" y1="'+Tm+'" x2="'+x(tCycle)+'" y2="'+(Tm+ph)+'" stroke="var(--ink)" stroke-opacity="0.35"/>');
+  s.push('<text x="'+x(tCycle)+'" y="'+(Tm-6)+'" text-anchor="middle" font-size="11" fill="var(--ink)">~1 '+monthOf(tCycle+1)+'</text>');
+  // dataset target / unique target / ceiling
+  s.push('<line x1="'+L+'" y1="'+yds(dTarget)+'" x2="'+(L+pw)+'" y2="'+yds(dTarget)+'" stroke="var(--orange)" stroke-dasharray="4 4"/>');
+  s.push('<text x="'+(L+pw)+'" y="'+(yds(dTarget)-4)+'" text-anchor="end" font-size="10" fill="var(--orange)">datasets '+dTarget+'</text>');
+  s.push('<line x1="'+L+'" y1="'+yu(uTarget)+'" x2="'+(L+pw)+'" y2="'+yu(uTarget)+'" stroke="var(--purple)" stroke-dasharray="4 4"/>');
+  s.push('<text x="'+(L+pw)+'" y="'+(yu(uTarget)+12)+'" text-anchor="end" font-size="10" fill="var(--purple)">unique '+uTarget+'</text>');
+  s.push('<line x1="'+L+'" y1="'+yu(ceiling)+'" x2="'+(L+pw)+'" y2="'+yu(ceiling)+'" stroke="var(--ink)" stroke-dasharray="2 3"/>');
+  s.push('<text x="'+(L+2)+'" y="'+(yu(ceiling)-4)+'" text-anchor="start" font-size="10" fill="var(--ink)">ceiling '+ceiling+'</text>');
+  // datasets area + line
+  var areaPts = rows.map(function(r,i){return x(i)+','+yds(r.datasets);});
+  var area = 'M'+L+','+(Tm+ph)+' L'+areaPts.join(' L')+' L'+(L+pw)+','+(Tm+ph)+' Z';
+  s.push('<path d="'+area+'" fill="var(--orange)" fill-opacity="0.12"/>');
+  s.push('<polyline points="'+rows.map(function(r,i){return x(i)+','+yds(r.datasets);}).join(' ')+'" fill="none" stroke="var(--orange)" stroke-width="2.5"/>');
+  // unique line + dots
+  s.push('<polyline points="'+rows.map(function(r,i){return x(i)+','+yu(r.unique);}).join(' ')+'" fill="none" stroke="var(--purple)" stroke-width="2.5"/>');
+  rows.forEach(function(r,i){ s.push('<circle cx="'+x(i)+'" cy="'+yu(r.unique)+'" r="3" fill="var(--purple)"/>'); });
+  // legend
+  s.push('<rect x="'+L+'" y="6" width="12" height="3" fill="var(--orange)"/><text x="'+(L+16)+'" y="11" font-size="11" fill="var(--inkSoft)">Usable datasets</text>');
+  s.push('<rect x="'+(L+130)+'" y="6" width="12" height="3" fill="var(--purple)"/><text x="'+(L+146)+'" y="11" font-size="11" fill="var(--inkSoft)">Unique users</text>');
+  s.push('</svg>');
+  return s.join('');
+}
+
+function render(){
+  var activeStages=[num('a1'),num('a2'),num('a3'),num('a4'),num('a5')];
+  var activeTotal=activeStages.reduce(function(a,b){return a+b;},0);
+  var total=num('total'), uniqueNow=num('unique');
+  var inactive=Math.max(0,total-activeTotal), nonUnique=Math.max(0,total-uniqueNow);
+  var per=[num('p1'),num('p2'),num('p3'),num('p4'),num('p5')];
+  var datasetsNow=per.reduce(function(a,b){return a+b;},0);
+  var waves=[
+    {count:num('wAn'),cycle:+document.getElementById('wAc').value,confirmed:chk('wAk')},
+    {count:num('wBn'),cycle:+document.getElementById('wBc').value,confirmed:chk('wBk')},
+    {count:num('wCn'),cycle:+document.getElementById('wCc').value,confirmed:chk('wCk')}
+  ].filter(function(w){return w.count>0;});
+  var recruitTotal=waves.reduce(function(a,b){return a+b.count;},0);
+  var extra=num('extra');
+  var d=[num('d1'),num('d2'),num('d3'),num('d4'),num('d5')].map(function(x){return x/100;});
+  var uTarget=num('uTarget'), dTarget=num('dTarget'), tCycle=Math.max(0,Math.min(6,num('tCycle')));
+  var ceiling=uniqueNow+recruitTotal+extra;
+
+  var args={activeStages:activeStages, seedUnique:uniqueNow, seedDatasets:datasetsNow,
+    seedPer:per.slice(), m:num('mit')/100, d:d, quit:num('quit')/100, cycles:6, capUnique:ceiling};
+  var allWaves=waves.slice(); if(extra>0) allWaves.push({cycle:2,count:extra,confirmed:false});
+  var rows=project(Object.assign({},args,{waves:allWaves}));
+
+  var at=rows[tCycle];
+  var uniqueMet=at.unique>=uTarget, dsMet=at.datasets>=dTarget, both=uniqueMet&&dsMet;
+  var tLabel='~1 '+monthOf(tCycle+1);
+
+  // solver on base plan (no manual extra)
+  var solverArgs=Object.assign({},args,{capUnique:uniqueNow+recruitTotal});
+  var baseWaves=waves.map(function(w){return {cycle:w.cycle,count:w.count,confirmed:w.confirmed};});
+  var needU=solve(solverArgs,baseWaves,'unique',uTarget,tCycle,2);
+  var needD=solve(solverArgs,baseWaves,'datasets',dTarget,tCycle,2);
+
+  // banner
+  var b=document.getElementById('banner');
+  b.style.background = both?'#eaf6ef':'#fcefec';
+  b.style.border = '1px solid '+(both?'var(--good)':'var(--orange)');
+  var extraMsg = both ? '' :
+    (needD===null ? ' The dataset target can\'t be hit by this date at any recruitment level — periods only arrive monthly.'
+     : needD>0 ? ' To close the dataset gap, recruit ~'+needD+' more today.' : '');
+  b.innerHTML =
+    '<h2 style="color:'+(both?'var(--good)':'var(--bad)')+'">'+(both?'On track for '+tLabel:'Off track for '+tLabel)+'</h2>'+
+    '<p>By <b>'+tLabel+'</b>: <b style="color:var(--purple)">'+at.unique.toFixed(0)+' unique users</b> (target '+uTarget+') '+
+    'and <b style="color:var(--orange)">'+at.datasets.toFixed(0)+' datasets</b> (target '+dTarget+'). '+
+    'Most unique users possible is <b>'+ceiling+'</b> — '+uniqueNow+' now + '+(recruitTotal+extra)+' recruits'+
+    (nonUnique>0?' (your '+inactive+' inactive people can\'t add more; '+nonUnique+' never got usable data).':'.')+
+    extraMsg+'</p>';
+
+  // tiles
+  document.getElementById('uTileLab').textContent='Unique users · '+tLabel;
+  document.getElementById('uVal').textContent=at.unique.toFixed(0);
+  document.getElementById('uOf').textContent='/ '+uTarget+' · max '+ceiling;
+  var us=document.getElementById('uStatus');
+  us.style.color=uniqueMet?'var(--good)':'var(--bad)';
+  us.textContent=uniqueMet?'✓ on track':'✗ short — '+(needU===null?'not reachable by date':needU===0?'met':'recruit ~'+needU+' more today');
+
+  document.getElementById('dTileLab').textContent='Datasets · '+tLabel;
+  document.getElementById('dVal').textContent=at.datasets.toFixed(0);
+  document.getElementById('dOf').textContent='/ '+dTarget;
+  var ds=document.getElementById('dStatus');
+  ds.style.color=dsMet?'var(--good)':'var(--bad)';
+  ds.textContent=dsMet?'✓ on track':'✗ short — '+(needD===null?'not reachable by date':needD===0?'met':'recruit ~'+needD+' more today');
+
+  // chart
+  document.getElementById('chart').innerHTML=buildChart(rows, ceiling, dTarget, uTarget, tCycle);
+
+  // per-period bars
+  var labels=['1st period','2nd','3rd','4th','5th'];
+  var pmax=Math.max.apply(null, at.per.concat([1]));
+  var bars=at.per.map(function(v,i){
+    return '<div class="barRow"><div class="lab">'+labels[i]+'</div>'+
+      '<div class="barTrack"><div class="barFill" style="width:'+(v/pmax*100)+'%"></div></div>'+
+      '<div class="num">'+v.toFixed(1)+'</div></div>';
+  }).join('');
+  document.getElementById('perBars').innerHTML=bars;
+  document.getElementById('perTitle').textContent='Usable datasets by period at '+tLabel;
+  document.getElementById('perTotal').textContent='Total: '+at.datasets.toFixed(1)+' usable datasets.';
+
+  // subs / notes
+  document.getElementById('activeSub').textContent=activeTotal+' active, by last period completed.'+(activeTotal>total?' ⚠ exceeds total people!':'');
+  document.getElementById('dsSub').textContent='Total so far: '+datasetsNow+'.';
+  document.getElementById('estNote').textContent=inactive+' inactive (kept their data, won\'t add more); '+nonUnique+' of all '+total+' never got usable data.';
+  document.getElementById('foot').textContent=
+    'The five "active testers" boxes are the '+activeTotal+' people still testing, grouped by periods finished — who will produce more data. '+
+    '"Total who did period 1" and "unique users now" set the static history and the '+ceiling+'-person ceiling. '+
+    'Expected-value model; fractional people are normal. Adjust any box and everything recalculates instantly.';
+}
+
+document.addEventListener('input', render);
+render();
+</script>
+</body>
+</html>
